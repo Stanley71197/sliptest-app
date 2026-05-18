@@ -184,6 +184,41 @@ const SCHOOLS = [
 
 function uid() { return Math.random().toString(36).slice(2,9); }
 function calcPct(o, m) { return m > 0 ? Math.round((o / m) * 100) : 0; }
+
+function countBelow50(students, slipTests, allMarks) {
+  const below50Set = new Set();
+  students.forEach(s => {
+    slipTests.forEach(st => {
+      const e = (allMarks[st.id] || {})[s.id];
+      if (!e || e.absent) return;
+      const stMax = st.subjects.reduce((a, sub) => a + sub.maxMarks, 0);
+      if (stMax === 0) return;
+      const obtained = st.subjects.reduce((a, sub) => {
+        const v = e.scores?.[sub.subj];
+        return a + (v !== "" && v !== undefined ? Number(v) : 0);
+      }, 0);
+      if (calcPct(obtained, stMax) < 50) below50Set.add(s.id);
+    });
+  });
+  return below50Set.size;
+}
+
+function countBelow50InTest(students, st, stMarks) {
+  let count = 0;
+  const stMax = st.subjects.reduce((a, s) => a + s.maxMarks, 0);
+  if (stMax === 0) return 0;
+  students.forEach(s => {
+    const e = stMarks[s.id];
+    if (!e || e.absent) return;
+    const obtained = st.subjects.reduce((a, sub) => {
+      const v = e.scores?.[sub.subj];
+      return a + (v !== "" && v !== undefined ? Number(v) : 0);
+    }, 0);
+    if (calcPct(obtained, stMax) < 50) count++;
+  });
+  return count;
+}
+
 function useToast() {
   const [msg, setMsg] = useState("");
   function show(m) { setMsg(m); setTimeout(() => setMsg(""), 2500); }
@@ -341,10 +376,84 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-he
   .page{padding:28px 80px;padding-bottom:90px}
   .dash-grid{grid-template-columns:repeat(4,1fr)}
 }
+
+/* ── Admin Dashboard Styles ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+
+.wrap{max-width:1280px;margin:0 auto;padding:24px}
+.hdr{background:linear-gradient(135deg,var(--p),#1e3a8a);padding:18px 28px;display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;border-radius:20px;box-shadow:0 4px 20px rgba(30,64,175,.25)}
+.hdr-title{font-size:22px;font-weight:800;color:#fff}
+.hdr-sub{font-size:13px;color:rgba(255,255,255,.6);margin-top:2px}
+.live-dot{width:8px;height:8px;background:#4ade80;border-radius:50%;display:inline-block;margin-right:6px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.stat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:var(--card);border-radius:18px;padding:22px 20px;box-shadow:var(--sh)}
+.stat-card.warn{border-left:4px solid var(--orange)}
+.stat-num{font-family:'JetBrains Mono',monospace;font-size:36px;font-weight:700;color:var(--p);line-height:1}
+.stat-num.warn{color:var(--orange)}
+.stat-lbl{font-size:13px;font-weight:700;color:var(--sub);margin-top:6px}
+.search-wrap{margin-bottom:20px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.search-inp{flex:1;min-width:200px;padding:12px 16px;background:var(--card);border:1.5px solid var(--border);border-radius:13px;font-size:15px;outline:none;color:var(--text);font-family:'Sora',sans-serif;box-shadow:var(--sh)}
+.search-inp:focus{border-color:var(--p)}
+.filter-select{padding:12px 14px;background:var(--card);border:1.5px solid var(--border);border-radius:13px;font-size:14px;outline:none;color:var(--text);font-family:'Sora',sans-serif;box-shadow:var(--sh);cursor:pointer}
+.schools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-bottom:24px}
+.sch-card{background:var(--card);border-radius:18px;padding:18px;box-shadow:var(--sh);cursor:pointer;transition:transform .15s,box-shadow .15s;border:2px solid transparent}
+.sch-card:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(30,64,175,.15);border-color:var(--p)}
+.sch-card.selected{border-color:var(--p);background:#f0f6ff}
+.sch-sno{font-size:11px;font-weight:800;color:var(--sub);letter-spacing:.5px;margin-bottom:4px}
+.sch-name{font-size:14px;font-weight:800;color:var(--text);margin-bottom:10px;line-height:1.3}
+.sch-avg{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;color:var(--p);line-height:1;margin-bottom:6px}
+.pbar-wrap{height:7px;background:var(--border);border-radius:99px;overflow:hidden;margin-bottom:8px}
+.pbar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--p),var(--p2));transition:width .6s}
+.sch-foot{display:flex;gap:8px;font-size:11px;color:var(--sub);flex-wrap:wrap;align-items:center}
+.below50-chip{background:#fff7ed;color:var(--orange);font-size:11px;font-weight:800;padding:3px 8px;border-radius:8px;border:1px solid #fed7aa;display:inline-flex;align-items:center;gap:3px}
+.detail-panel{background:var(--card);border-radius:18px;padding:24px;box-shadow:var(--sh)}
+.panel-title{font-size:20px;font-weight:800;color:var(--text);margin-bottom:4px}
+.panel-sub{font-size:13px;color:var(--sub);margin-bottom:10px}
+.panel-alert{background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:12px 16px;font-size:13px;font-weight:700;color:var(--orange);margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.tab-btn{padding:9px 18px;border-radius:12px;border:2px solid var(--border);background:var(--bg);font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;color:var(--sub)}
+.tab-btn.on{background:var(--p);border-color:var(--p);color:#fff}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;font-weight:800;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;padding:10px 12px;text-align:left;border-bottom:2px solid var(--border);background:#fafbff;white-space:nowrap}
+td{padding:10px 12px;font-size:13px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f8faff}
+tr.below50-row td{background:#fff7ed}
+tr.below50-row:hover td{background:#ffedd5}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:800;color:#fff}
+.pass-b{background:var(--green)}
+.fail-b{background:var(--red)}
+.abs-b{background:#94a3b8}
+.warn-b{background:var(--orange)}
+.mono{font-family:'JetBrains Mono',monospace;font-weight:700}
+.subj-chip{display:inline-block;background:#eff6ff;color:var(--p);font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;margin:2px}
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:12px;color:var(--sub)}
+.spinner{width:44px;height:44px;border:4px solid var(--border);border-top-color:var(--p);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(150deg,#1e3a8a,#1d4ed8)}
+.login-card{background:#fff;border-radius:24px;padding:40px 36px;width:380px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.login-title{font-size:22px;font-weight:800;color:var(--text);margin-bottom:6px}
+.login-sub{font-size:13px;color:var(--sub);margin-bottom:24px}
+.lf{margin-bottom:14px}
+.lf label{display:block;font-size:11px;font-weight:700;color:var(--sub);margin-bottom:5px;letter-spacing:.5px;text-transform:uppercase}
+.lf input{width:100%;padding:12px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;font-size:15px;outline:none;color:var(--text);font-family:'Sora',sans-serif;box-sizing:border-box}
+.lf input:focus{border-color:var(--p);background:#fff}
+.lbtn{width:100%;padding:14px;background:linear-gradient(135deg,var(--p),var(--p2));border:none;border-radius:13px;color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:'Sora',sans-serif;margin-top:4px}
+.lerr{color:var(--red);font-size:13px;margin-top:10px;font-weight:600}
+.no-data{text-align:center;padding:40px;color:var(--sub);font-size:14px}
+.legend{display:flex;gap:14px;align-items:center;font-size:12px;color:var(--sub);margin-bottom:12px;flex-wrap:wrap}
+.legend-dot{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:4px}
+@media(max-width:900px){.stat-grid{grid-template-columns:1fr 1fr}.schools-grid{grid-template-columns:1fr}}
+/* ── Login role tabs ── */
+.role-tabs{display:flex;background:rgba(255,255,255,.10);border-radius:14px;padding:4px;gap:4px;margin:18px 0}
+.role-tab{flex:1;padding:11px;border:none;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:rgba(255,255,255,.55);font-family:'Sora',sans-serif;transition:all .2s}
+.role-tab.on{background:var(--acc);color:#fff;box-shadow:0 2px 10px rgba(245,158,11,.45)}
 `;
 
 // ─── Login ────────────────────────────────────────────────────────────────────
-function Login({ onLogin }) {
+function HMLoginForm({ onLogin }) {
   const [query, setQuery] = useState("");
   const [user, setUser] = useState("");
   const [pass, setPass] = useState("");
@@ -572,7 +681,7 @@ function MarkEntry({ school, slipTest, students, marks, onMarkChange, onBack, to
   );
 }
 
-function Dashboard({ school, students, slipTests, allMarks }) {
+function HMDashboard({ school, students, slipTests, allMarks }) {
   const [view, setView] = useState(null);
   const [subView, setSubView] = useState(null);
   const totalTests = slipTests.length;
@@ -844,7 +953,7 @@ function HMApp({ session, onLogout }) {
         <button className="hbtn" onClick={onLogout}>Logout</button>
       </div>
 
-      {tab === "dash" && <Dashboard school={school} students={students} slipTests={slipTests} allMarks={allMarks} />}
+      {tab === "dash" && <HMDashboard school={school} students={students} slipTests={slipTests} allMarks={allMarks} />}
 
       {tab === "tests" && (
         <div className="page">
@@ -917,12 +1026,472 @@ function HMApp({ session, onLogout }) {
   );
 }
 
+// ─── Admin Login ──────────────────────────────────────────────────────────────
+function AdminLoginForm({ onLogin }) {
+  const [user, setUser] = useState("");
+  const [pass, setPass] = useState("");
+  const [err, setErr] = useState("");
+  function go() {
+    if (user === "admin" && pass === "admin123") onLogin();
+    else setErr("Invalid credentials. Use admin / admin123");
+  }
+  return (
+    <div>
+      <div className="fld"><label>Username</label><input placeholder="admin" value={user} onChange={e => setUser(e.target.value)} /></div>
+      <div className="fld"><label>Password</label><input type="password" placeholder="••••••••" value={pass} onChange={e => setPass(e.target.value)} onKeyDown={e => e.key === "Enter" && go()} /></div>
+      <button className="lbtn" onClick={go}>Login →</button>
+      {err && <div className="lerr">⚠ {err}</div>}
+    </div>
+  );
+}
+
+function SchoolDetail({ school, students, slipTests, allMarks }) {
+  const [tab, setTab] = useState("tests");
+
+  const below50Total = countBelow50(students, slipTests, allMarks);
+
+  function testSummary(st) {
+    const stMarks = allMarks[st.id] || {};
+    const stMax = st.subjects.reduce((a, s) => a + s.maxMarks, 0);
+    let tot = 0, mx = 0, pass = 0, fail = 0, absent = 0;
+    students.forEach(s => {
+      const e = stMarks[s.id]; if (!e) return;
+      if (e.absent) { absent++; return; }
+      if (e.pass === true) pass++;
+      if (e.pass === false) fail++;
+      mx += stMax;
+      st.subjects.forEach(sub => { const v = e.scores?.[sub.subj]; if (v !== "" && v !== undefined) tot += Number(v); });
+    });
+    const avg = mx > 0 ? calcPct(tot, mx) : null;
+    const below50 = countBelow50InTest(students, st, stMarks);
+    return { avg, pass, fail, absent, stMax, below50 };
+  }
+
+  function studentSummary(s) {
+    let tot = 0, mx = 0, pass = 0, fail = 0, absent = 0;
+    slipTests.forEach(st => {
+      const e = (allMarks[st.id] || {})[s.id]; if (!e) return;
+      if (e.absent) { absent++; return; }
+      if (e.pass === true) pass++;
+      if (e.pass === false) fail++;
+      const stMax = st.subjects.reduce((a, sub) => a + sub.maxMarks, 0);
+      mx += stMax;
+      st.subjects.forEach(sub => { const v = e.scores?.[sub.subj]; if (v !== "" && v !== undefined) tot += Number(v); });
+    });
+    return { avg: mx > 0 ? calcPct(tot, mx) : null, pass, fail, absent };
+  }
+
+  // Per student: list which tests they scored below 50%
+  function getStudentBelow50Tests(s) {
+    const bad = [];
+    slipTests.forEach(st => {
+      const e = (allMarks[st.id] || {})[s.id];
+      if (!e || e.absent) return;
+      const stMax = st.subjects.reduce((a, sub) => a + sub.maxMarks, 0);
+      if (stMax === 0) return;
+      const obtained = st.subjects.reduce((a, sub) => {
+        const v = e.scores?.[sub.subj];
+        return a + (v !== "" && v !== undefined ? Number(v) : 0);
+      }, 0);
+      if (calcPct(obtained, stMax) < 50) bad.push({ stName: st.name, obtained, stMax, pct: calcPct(obtained, stMax) });
+    });
+    return bad;
+  }
+
+  return (
+    <div className="detail-panel">
+      <div className="panel-title">{school.name}</div>
+      <div className="panel-sub">{students.length} students &nbsp;·&nbsp; {slipTests.length} slip tests</div>
+
+      {below50Total > 0 && (
+        <div className="panel-alert">
+          ⚠ <span>{below50Total} student{below50Total > 1 ? "s" : ""} scored below 50% in at least one slip test</span>
+        </div>
+      )}
+
+      <div className="tabs">
+        <button className={"tab-btn" + (tab === "tests" ? " on" : "")} onClick={() => setTab("tests")}>📋 Slip Tests</button>
+        <button className={"tab-btn" + (tab === "students" ? " on" : "")} onClick={() => setTab("students")}>👥 Students</button>
+        {below50Total > 0 && (
+          <button className={"tab-btn" + (tab === "below50" ? " on" : "")}
+            style={tab !== "below50" ? { borderColor: "#fed7aa", color: "var(--orange)", background: "#fff7ed" } : { background: "var(--orange)", borderColor: "var(--orange)" }}
+            onClick={() => setTab("below50")}>
+            ⚠ Below 50% ({below50Total})
+          </button>
+        )}
+      </div>
+
+      {tab === "tests" && (
+        slipTests.length === 0
+          ? <div className="no-data">No slip tests created yet</div>
+          : <div style={{ overflowX: "auto" }}>
+            <div className="legend">
+              <span><span className="legend-dot" style={{ background: "#fed7aa" }}></span>Below 50% count highlighted in orange</span>
+            </div>
+            <table>
+              <thead><tr>
+                <th>Test Name</th><th>Date</th><th>Subjects</th><th>Pass</th><th>Fail</th><th>Absent</th>
+                <th style={{ color: "var(--orange)" }}>⚠ Below 50%</th><th>Avg %</th>
+              </tr></thead>
+              <tbody>
+                {slipTests.map(st => {
+                  const s = testSummary(st);
+                  return (
+                    <tr key={st.id}>
+                      <td style={{ fontWeight: 700 }}>{st.name}</td>
+                      <td style={{ color: "var(--sub)" }}>{st.date}</td>
+                      <td>{st.subjects.map(s => <span key={s.subj} className="subj-chip">{s.subj}({s.maxMarks})</span>)}</td>
+                      <td><span className="mono" style={{ color: "var(--green)" }}>{s.pass}</span></td>
+                      <td><span className="mono" style={{ color: "var(--red)" }}>{s.fail}</span></td>
+                      <td><span className="mono" style={{ color: "#94a3b8" }}>{s.absent}</span></td>
+                      <td>
+                        {s.below50 > 0
+                          ? <span className="badge warn-b">{s.below50} students</span>
+                          : <span style={{ color: "var(--green)", fontWeight: 700 }}>✓ None</span>}
+                      </td>
+                      <td><span className="mono" style={{ color: "var(--p)", fontSize: 15 }}>{s.avg !== null ? s.avg + "%" : "—"}</span></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+      )}
+
+      {tab === "students" && (
+        students.length === 0
+          ? <div className="no-data">No students added yet</div>
+          : <div style={{ overflowX: "auto" }}>
+            <div className="legend">
+              <span><span className="legend-dot" style={{ background: "#fed7aa" }}></span>Orange rows = scored below 50% in at least one test</span>
+            </div>
+            <table>
+              <thead><tr>
+                <th>Roll</th><th>Name</th><th>Gender</th>
+                {slipTests.map(st => <th key={st.id}>{st.name}</th>)}
+                <th>Overall</th><th style={{ color: "var(--orange)" }}>⚠ Below 50%</th><th>Status</th>
+              </tr></thead>
+              <tbody>
+                {[...students].sort((a, b) => a.rollNo.localeCompare(b.rollNo, undefined, { numeric: true })).map(s => {
+                  const ss = studentSummary(s);
+                  const badTests = getStudentBelow50Tests(s);
+                  const isBelow = badTests.length > 0;
+                  return (
+                    <tr key={s.id} className={isBelow ? "below50-row" : ""}>
+                      <td className="mono">{s.rollNo}</td>
+                      <td style={{ fontWeight: 700 }}>{s.name}</td>
+                      <td style={{ color: "var(--sub)" }}>{s.gender}</td>
+                      {slipTests.map(st => {
+                        const e = (allMarks[st.id] || {})[s.id];
+                        const stMax = st.subjects.reduce((a, sub) => a + sub.maxMarks, 0);
+                        const obtained = e && !e.absent ? st.subjects.reduce((a, sub) => {
+                          const v = e.scores?.[sub.subj]; return a + (v !== "" && v !== undefined ? Number(v) : 0);
+                        }, 0) : null;
+                        const pctVal = obtained !== null ? calcPct(obtained, stMax) : null;
+                        const isTestBelow = pctVal !== null && pctVal < 50;
+                        return (
+                          <td key={st.id}>
+                            {!e ? <span style={{ color: "#94a3b8" }}>—</span>
+                              : e.absent ? <span className="badge abs-b">Ab</span>
+                                : <span className="mono" style={{ color: isTestBelow ? "var(--orange)" : "var(--p)", fontWeight: isTestBelow ? 800 : 700 }}>
+                                  {obtained}/{stMax}
+                                  {isTestBelow && <span style={{ fontSize: 10, marginLeft: 3 }}>({pctVal}%)</span>}
+                                </span>}
+                          </td>
+                        );
+                      })}
+                      <td><span className="mono" style={{ color: "var(--p)", fontSize: 14 }}>{ss.avg !== null ? ss.avg + "%" : "—"}</span></td>
+                      <td>
+                        {isBelow
+                          ? <span className="badge warn-b">{badTests.length} test{badTests.length > 1 ? "s" : ""}</span>
+                          : slipTests.length > 0 ? <span style={{ color: "var(--green)", fontWeight: 700, fontSize: 12 }}>✓ None</span>
+                            : <span style={{ color: "#94a3b8" }}>—</span>}
+                      </td>
+                      <td>
+                        {ss.pass > 0 && ss.fail === 0 ? <span className="badge pass-b">Pass</span>
+                          : ss.fail > 0 ? <span className="badge fail-b">Fail</span>
+                            : <span style={{ color: "#94a3b8" }}>—</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+      )}
+
+      {tab === "below50" && (
+        <div style={{ overflowX: "auto" }}>
+          {(() => {
+            const flagged = students.filter(s => getStudentBelow50Tests(s).length > 0)
+              .sort((a, b) => a.rollNo.localeCompare(b.rollNo, undefined, { numeric: true }));
+
+            return (
+              <>
+                {/* School + count summary banner */}
+                <div style={{
+                  background: flagged.length > 0 ? "#fff7ed" : "#f0fdf4",
+                  border: "1px solid " + (flagged.length > 0 ? "#fed7aa" : "#86efac"),
+                  borderRadius: 14, padding: "16px 20px", marginBottom: 16,
+                  display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12
+                }}>
+                  <div>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: "var(--text)", marginBottom: 3 }}>
+                      {school.name}
+                    </div>
+                    <div style={{ fontSize: 13, color: "var(--sub)" }}>
+                      Students scored below 50% in at least one slip test
+                    </div>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{
+                      fontFamily: "'JetBrains Mono',monospace", fontSize: 36, fontWeight: 800, lineHeight: 1,
+                      color: flagged.length > 0 ? "var(--orange)" : "var(--green)"
+                    }}>
+                      {flagged.length}
+                    </div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "var(--sub)", marginTop: 3 }}>
+                      {flagged.length === 0 ? "✓ All students above 50%" : `student${flagged.length > 1 ? "s" : ""} below 50%`}
+                    </div>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
+          {(() => {
+            const flagged = students.filter(s => getStudentBelow50Tests(s).length > 0)
+              .sort((a, b) => a.rollNo.localeCompare(b.rollNo, undefined, { numeric: true }));
+            if (flagged.length === 0) return <div className="no-data" style={{ color: "var(--green)" }}>✓ No students below 50% in any test</div>;
+            return (
+              <table>
+                <thead><tr>
+                  <th>Roll</th><th>Name</th><th>Gender</th><th>Tests Below 50%</th><th>Details</th>
+                </tr></thead>
+                <tbody>
+                  {flagged.map(s => {
+                    const badTests = getStudentBelow50Tests(s);
+                    return (
+                      <tr key={s.id}>
+                        <td className="mono">{s.rollNo}</td>
+                        <td style={{ fontWeight: 800 }}>{s.name}</td>
+                        <td style={{ color: "var(--sub)" }}>{s.gender}</td>
+                        <td><span className="badge warn-b">{badTests.length} test{badTests.length > 1 ? "s" : ""}</span></td>
+                        <td>
+                          {badTests.map((bt, i) => (
+                            <span key={i} style={{ display: "inline-block", background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 8, padding: "3px 9px", fontSize: 12, fontWeight: 700, color: "var(--orange)", marginRight: 6, marginBottom: 4 }}>
+                              {bt.stName}: {bt.obtained}/{bt.stMax} ({bt.pct}%)
+                            </span>
+                          ))}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            );
+          })()}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AdminDashboardView({ onLogout }) {
+  const [allData, setAllData] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [selSchool, setSelSchool] = useState(SCHOOLS[0].id);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all");
+
+  useEffect(() => {
+    const unsubs = [];
+    const tmp = {};
+    let loadedCount = 0;
+    SCHOOLS.forEach(sch => {
+      tmp[sch.id] = { students: [], slipTests: [], marks: {} };
+      unsubs.push(onSnapshot(collection(db, "schools", sch.id, "students"), snap => {
+        tmp[sch.id] = { ...tmp[sch.id], students: snap.docs.map(d => ({ id: d.id, ...d.data() })) };
+        setAllData(p => ({ ...p, [sch.id]: { ...tmp[sch.id] } }));
+      }));
+      unsubs.push(onSnapshot(collection(db, "schools", sch.id, "slipTests"), snap => {
+        tmp[sch.id] = { ...tmp[sch.id], slipTests: snap.docs.map(d => ({ id: d.id, ...d.data() })) };
+        setAllData(p => ({ ...p, [sch.id]: { ...tmp[sch.id] } }));
+      }));
+      unsubs.push(onSnapshot(collection(db, "schools", sch.id, "marks"), snap => {
+        const m = {};
+        snap.docs.forEach(d => { const [stId, stuId] = d.id.split("__"); if (!m[stId]) m[stId] = {}; m[stId][stuId] = d.data(); });
+        tmp[sch.id] = { ...tmp[sch.id], marks: m };
+        setAllData(p => ({ ...p, [sch.id]: { ...tmp[sch.id] } }));
+        loadedCount++;
+        if (loadedCount >= SCHOOLS.length) setLoading(false);
+      }));
+    });
+    return () => unsubs.forEach(u => u());
+  }, []);
+
+  function schSummary(schId) {
+    const d = allData[schId];
+    if (!d) return { avg: null, students: 0, slipTests: 0, pass: 0, fail: 0, absent: 0, below50: 0 };
+    let tot = 0, mx = 0, pass = 0, fail = 0, absent = 0;
+    d.students.forEach(s => {
+      d.slipTests.forEach(st => {
+        const e = (d.marks[st.id] || {})[s.id]; if (!e) return;
+        if (e.absent) { absent++; return; }
+        if (e.pass === true) pass++;
+        if (e.pass === false) fail++;
+        const stMax = st.subjects.reduce((a, sub) => a + sub.maxMarks, 0);
+        mx += stMax;
+        st.subjects.forEach(sub => { const v = e.scores?.[sub.subj]; if (v !== "" && v !== undefined) tot += Number(v); });
+      });
+    });
+    const below50 = countBelow50(d.students, d.slipTests, d.marks);
+    return { avg: mx > 0 ? calcPct(tot, mx) : null, students: d.students.length, slipTests: d.slipTests.length, pass, fail, absent, below50 };
+  }
+
+  const globalStats = SCHOOLS.reduce((acc, sch) => {
+    const s = schSummary(sch.id);
+    acc.students += s.students; acc.tests += s.slipTests;
+    acc.pass += s.pass; acc.fail += s.fail; acc.below50 += s.below50;
+    if (s.avg !== null) { acc.avgSum += s.avg; acc.avgCount++; }
+    return acc;
+  }, { students: 0, tests: 0, pass: 0, fail: 0, below50: 0, avgSum: 0, avgCount: 0 });
+  const globalAvg = globalStats.avgCount > 0 ? Math.round(globalStats.avgSum / globalStats.avgCount) : null;
+
+  const filteredSchools = SCHOOLS.filter(sch => {
+    const matchSearch = sch.name.toLowerCase().includes(search.toLowerCase());
+    const ss = schSummary(sch.id);
+    const matchFilter =
+      filter === "all" ? true :
+      filter === "active" ? ss.slipTests > 0 :
+      filter === "no-tests" ? ss.slipTests === 0 :
+      filter === "no-data" ? ss.students === 0 :
+      filter === "below50" ? ss.below50 > 0 : true;
+    return matchSearch && matchFilter;
+  });
+
+  if (loading) return <div className="loading"><div className="spinner" /><div>Loading all school data from Firebase…</div></div>;
+
+  const selData = allData[selSchool] || { students: [], slipTests: [], marks: {} };
+  const selSch = SCHOOLS.find(s => s.id === selSchool);
+
+  return (
+    <div style={{ background: "var(--bg)", minHeight: "100vh" }}>
+      <div className="wrap">
+        <div className="hdr">
+          <div>
+            <div className="hdr-title">🛡 Slip Test Admin Dashboard</div>
+            <div className="hdr-sub"><span className="live-dot" />Live · Krishna District · {SCHOOLS.length} Schools</div>
+          </div>
+          <button onClick={onLogout} style={{ background: "rgba(255,255,255,.15)", border: "none", borderRadius: 10, color: "#fff", padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Sora',sans-serif" }}>Logout</button>
+        </div>
+
+        <div className="stat-grid">
+          <div className="stat-card"><div className="stat-num">{SCHOOLS.length}</div><div className="stat-lbl">🏫 Schools</div></div>
+          <div className="stat-card"><div className="stat-num">{globalStats.students}</div><div className="stat-lbl">👥 Total Students</div></div>
+          <div className="stat-card"><div className="stat-num">{globalStats.tests}</div><div className="stat-lbl">📋 Total Tests</div></div>
+          <div className="stat-card"><div className="stat-num" style={{ color: globalAvg !== null ? "var(--p)" : "var(--sub)" }}>{globalAvg !== null ? globalAvg + "%" : "—"}</div><div className="stat-lbl">📊 Overall Avg</div></div>
+          <div className="stat-card warn">
+            <div className="stat-num warn">{globalStats.below50}</div>
+            <div className="stat-lbl">⚠ Below 50% (any test)</div>
+          </div>
+        </div>
+
+        <div className="search-wrap">
+          <input className="search-inp" placeholder="🔍 Search schools…" value={search} onChange={e => setSearch(e.target.value)} />
+          <select className="filter-select" value={filter} onChange={e => setFilter(e.target.value)}>
+            <option value="all">All Schools</option>
+            <option value="active">Has Tests</option>
+            <option value="no-tests">No Tests Yet</option>
+            <option value="no-data">No Students</option>
+            <option value="below50">Has Below 50% Students</option>
+          </select>
+          <span style={{ fontSize: 13, color: "var(--sub)", fontWeight: 600 }}>{filteredSchools.length} shown</span>
+        </div>
+
+        <div className="schools-grid">
+          {filteredSchools.map(sch => {
+            const s = schSummary(sch.id);
+            return (
+              <div key={sch.id} className={"sch-card" + (selSchool === sch.id ? " selected" : "")} onClick={() => setSelSchool(sch.id)}>
+                <div className="sch-sno">{sch.id.replace("SCH", "#")}</div>
+                <div className="sch-name">{sch.name}</div>
+                <div className="sch-avg">{s.avg !== null ? s.avg + "%" : "—"}</div>
+                <div className="pbar-wrap"><div className="pbar-fill" style={{ width: (s.avg ?? 0) + "%" }} /></div>
+                <div className="sch-foot">
+                  <span>{s.students} students</span>
+                  <span>{s.slipTests} tests</span>
+                  <span style={{ color: "var(--green)" }}>✓{s.pass}</span>
+                  <span style={{ color: "var(--red)" }}>✗{s.fail}</span>
+                  {s.below50 > 0 && (
+                    <span className="below50-chip">⚠ {s.below50} below 50%</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          {filteredSchools.length === 0 && <div style={{ gridColumn: "1/-1", textAlign: "center", padding: 40, color: "var(--sub)", fontSize: 14 }}>No schools match your search</div>}
+        </div>
+
+        {selSch && (
+          <SchoolDetail
+            school={selSch}
+            students={selData.students}
+            slipTests={selData.slipTests}
+            allMarks={selData.marks}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Admin Dashboard wrapper ──────────────────────────────────────────────────
+function AdminDashboard({ onLogout }) {
+  return <AdminDashboardView onLogout={onLogout} />;
+}
+
+// ─── Root ─────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState(null); // null | {role:'hm', school} | {role:'admin'}
+
+  function handleLogin(sess) { setSession(sess); }
+  function handleLogout() { setSession(null); }
+
+  if (!session) return <LoginGateway onLogin={handleLogin} />;
+  if (session.role === "admin") return (
+    <>
+      <style>{CSS}</style>
+      <AdminDashboard onLogout={handleLogout} />
+    </>
+  );
   return (
     <>
       <style>{CSS}</style>
-      {!session ? <Login onLogin={setSession} /> : <HMApp session={session} onLogout={() => setSession(null)} />}
+      <HMApp session={session} onLogout={handleLogout} />
+    </>
+  );
+}
+
+function LoginGateway({ onLogin }) {
+  const [mode, setMode] = useState("hm");
+  return (
+    <>
+      <style>{CSS}</style>
+      <div className="lbg">
+        <div className="lcard">
+          <div className="logo">📋</div>
+          <div className="ltitle">Slip Test Manager</div>
+          <div className="lsub">10th Class Assessment Portal</div>
+          <div className="role-tabs">
+            <button className={"role-tab" + (mode === "hm" ? " on" : "")} onClick={() => setMode("hm")}>🏫 HM Login</button>
+            <button className={"role-tab" + (mode === "admin" ? " on" : "")} onClick={() => setMode("admin")}>🛡 Admin</button>
+          </div>
+          {mode === "hm"
+            ? <HMLoginForm onLogin={school => onLogin({ role: "hm", school })} />
+            : <AdminLoginForm onLogin={() => onLogin({ role: "admin" })} />
+          }
+        </div>
+      </div>
     </>
   );
 }
