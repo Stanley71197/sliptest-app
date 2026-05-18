@@ -466,49 +466,43 @@ function HMLoginForm({ onLogin }) {
 
   function go() {
     if (!selSchool) { setErr("Please select a school"); return; }
-    if (selSchool.hmUser === user && selSchool.hmPass === pass) onLogin({ school: selSchool });
+    if (selSchool.hmUser === user && selSchool.hmPass === pass) onLogin(selSchool);
     else setErr("Wrong username or password");
   }
 
   return (
-    <div className="lbg">
-      <div className="lcard">
-        <div className="logo">📋</div>
-        <div className="ltitle">Slip Test Manager</div>
-        <div className="lsub">10th Class · HM Portal</div>
-        <div className="fld">
-          <label>Search & Select School</label>
-          <input
-            className="search-box"
-            style={{background:"rgba(255,255,255,.10)",border:"1.5px solid rgba(255,255,255,.18)",color:"#fff",borderRadius:13,padding:"12px 14px",fontSize:14,outline:"none",fontFamily:"Sora,sans-serif",marginBottom:6}}
-            placeholder="Type school name…"
-            value={query}
-            onChange={e => { setQuery(e.target.value); setSelSchool(null); }}
-          />
-          {query.length > 0 && !selSchool && (
-            <div style={{background:"rgba(255,255,255,.95)",borderRadius:13,maxHeight:180,overflowY:"auto",marginBottom:8}}>
-              {filtered.length === 0 && <div style={{padding:"12px 14px",color:"var(--sub)",fontSize:13}}>No schools found</div>}
-              {filtered.map(s => (
-                <div key={s.id} onClick={() => { setSelSchool(s); setQuery(s.name); }}
-                  style={{padding:"11px 14px",cursor:"pointer",borderBottom:"1px solid var(--border)",fontSize:13,fontWeight:600,color:"var(--text)"}}>
-                  {s.name}
-                </div>
-              ))}
-            </div>
-          )}
-          {selSchool && <div style={{background:"rgba(255,255,255,.15)",borderRadius:10,padding:"8px 12px",fontSize:12,color:"rgba(255,255,255,.9)",fontWeight:600,marginBottom:8}}>✓ {selSchool.name}</div>}
-        </div>
-        <div className="fld">
-          <label>Username</label>
-          <input placeholder="Enter username" value={user} onChange={e => setUser(e.target.value)} />
-        </div>
-        <div className="fld">
-          <label>Password</label>
-          <input type="password" placeholder="••••••••" value={pass} onChange={e => setPass(e.target.value)} onKeyDown={e => e.key === "Enter" && go()} />
-        </div>
-        <button className="lbtn" onClick={go}>Login →</button>
-        {err && <div className="lerr">⚠ {err}</div>}
+    <div>
+      <div className="fld">
+        <label>Search & Select School</label>
+        <input
+          style={{width:"100%",padding:"12px 14px",background:"rgba(255,255,255,.10)",border:"1.5px solid rgba(255,255,255,.18)",color:"#fff",borderRadius:13,fontSize:14,outline:"none",fontFamily:"Sora,sans-serif",marginBottom:6,boxSizing:"border-box"}}
+          placeholder="Type school name…"
+          value={query}
+          onChange={e => { setQuery(e.target.value); setSelSchool(null); }}
+        />
+        {query.length > 0 && !selSchool && (
+          <div style={{background:"rgba(255,255,255,.95)",borderRadius:13,maxHeight:180,overflowY:"auto",marginBottom:8}}>
+            {filtered.length === 0 && <div style={{padding:"12px 14px",color:"var(--sub)",fontSize:13}}>No schools found</div>}
+            {filtered.map(s => (
+              <div key={s.id} onClick={() => { setSelSchool(s); setQuery(s.name); }}
+                style={{padding:"11px 14px",cursor:"pointer",borderBottom:"1px solid var(--border)",fontSize:13,fontWeight:600,color:"var(--text)"}}>
+                {s.name}
+              </div>
+            ))}
+          </div>
+        )}
+        {selSchool && <div style={{background:"rgba(255,255,255,.15)",borderRadius:10,padding:"8px 12px",fontSize:12,color:"rgba(255,255,255,.9)",fontWeight:600,marginBottom:8}}>✓ {selSchool.name}</div>}
       </div>
+      <div className="fld">
+        <label>Username</label>
+        <input placeholder="Enter username" value={user} onChange={e => setUser(e.target.value)} />
+      </div>
+      <div className="fld">
+        <label>Password</label>
+        <input type="password" placeholder="••••••••" value={pass} onChange={e => setPass(e.target.value)} onKeyDown={e => e.key === "Enter" && go()} />
+      </div>
+      <button className="lbtn" onClick={go}>Login →</button>
+      {err && <div className="lerr">⚠ {err}</div>}
     </div>
   );
 }
