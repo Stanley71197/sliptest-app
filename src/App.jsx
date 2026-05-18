@@ -250,7 +250,8 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-he
 .fld select option{background:#1e3a8a;color:#fff}
 .lbtn{width:100%;padding:15px;background:linear-gradient(135deg,var(--acc),#d97706);border:none;border-radius:14px;color:#fff;font-size:16px;font-weight:800;cursor:pointer;margin-top:8px;font-family:'Sora',sans-serif}
 .lerr{color:#fca5a5;font-size:13px;text-align:center;margin-top:11px;font-weight:600}
-.hdr{background:linear-gradient(135deg,var(--p),#1e3a8a);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200}
+.hdr{background:linear-gradient(135deg,var(--p),#1e3a8a);padding:14px 16px;position:sticky;top:0;z-index:200}
+.hdr-inner{display:flex;align-items:center;justify-content:space-between;width:100%}
 .hdr-l{display:flex;align-items:center;gap:10px}
 .hdr-title{font-size:16px;font-weight:800;color:#fff;line-height:1.1}
 .hdr-sub{font-size:11px;color:rgba(255,255,255,.55)}
@@ -352,29 +353,42 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-he
 
 /* ── Responsive ── */
 @media(min-width:600px){
+  .hm-wrap{max-width:700px;margin:0 auto}
   .page{padding:20px 24px;padding-bottom:90px}
   .dash-grid{grid-template-columns:repeat(3,1fr)}
   .srow{grid-template-columns:repeat(3,1fr)}
   .hdr-title{font-size:19px}
-  .me-student-card{max-width:700px}
   .back{padding:16px 24px 8px}
   .sec{margin:18px 0 10px}
+  .bnav{justify-content:center}
+  .bni{max-width:160px}
 }
 @media(min-width:900px){
-  .page{padding:24px 40px;padding-bottom:90px}
-  .dash-grid{grid-template-columns:repeat(4,1fr);gap:16px}
-  .avg-tile{max-width:500px}
-  .card{max-width:900px}
-  .st-card{max-width:900px}
-  .me-student-card{max-width:800px}
-  .hdr{padding:16px 40px}
+  .hm-wrap{max-width:960px;margin:0 auto}
+  .page{padding:28px 40px;padding-bottom:90px}
+  .dash-grid{grid-template-columns:repeat(4,1fr);gap:20px}
+  .dash-tile{padding:28px 24px}
+  .tile-num{font-size:40px}
+  .tile-lbl{font-size:14px}
+  .avg-tile{padding:24px 28px}
+  .avg-num{font-size:44px}
+  .hdr-inner{max-width:960px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between}
   .hdr-title{font-size:20px}
+  .hdr-sub{font-size:13px}
   .bni-lbl{font-size:12px}
-  .bni-icon{font-size:22px}
+  .bni-icon{font-size:24px}
+  .st-card{border-radius:18px}
+  .me-student-card{border-radius:16px}
+  .card{border-radius:18px}
+  .bnav-inner{max-width:960px;margin:0 auto;display:flex;width:100%}
+  .sec{font-size:12px;margin:20px 0 10px}
 }
 @media(min-width:1200px){
-  .page{padding:28px 80px;padding-bottom:90px}
-  .dash-grid{grid-template-columns:repeat(4,1fr)}
+  .hm-wrap{max-width:1100px;margin:0 auto}
+  .page{padding:32px 48px;padding-bottom:90px}
+  .dash-grid{grid-template-columns:repeat(4,1fr);gap:24px}
+  .hdr-inner{max-width:1100px}
+  .bnav-inner{max-width:1100px}
 }
 
 /* ── Admin Dashboard Styles ── */
@@ -601,7 +615,7 @@ function MarkEntry({ school, slipTest, students, marks, onMarkChange, onBack, to
 
   if (students.length === 0) return (
     <div className="app">
-      <div className="hdr"><div className="hdr-l"><span style={{ fontSize: 20 }}>📝</span><div><div className="hdr-title">{slipTest.name}</div></div></div></div>
+      <div className="hdr"><div className="hdr-inner"><div className="hdr-l"><span style={{ fontSize: 20 }}>📝</span><div><div className="hdr-title">{slipTest.name}</div></div></div></div></div>
       <button className="back" onClick={onBack}>← Back</button>
       <div className="empty"><div className="empty-icon">👥</div><div className="empty-txt">No students — add students first</div></div>
     </div>
@@ -610,11 +624,14 @@ function MarkEntry({ school, slipTest, students, marks, onMarkChange, onBack, to
   return (
     <div className="app">
       <div className="hdr">
-        <div className="hdr-l">
-          <span style={{ fontSize: 20 }}>📝</span>
-          <div><div className="hdr-title">{slipTest.name}</div><div className="hdr-sub">{school.name} · Max {totalMax}</div></div>
+        <div className="hdr-inner">
+          <div className="hdr-l">
+            <span style={{ fontSize: 20 }}>📝</span>
+            <div><div className="hdr-title">{slipTest.name}</div><div className="hdr-sub">{school.name} · Max {totalMax}</div></div>
+          </div>
         </div>
       </div>
+      <div className="hm-wrap">
       <button className="back" onClick={onBack}>← Back</button>
       <div className="page" style={{ paddingTop: 0 }}>
         <div style={{ fontSize: 12, color: "var(--sub)", marginBottom: 10, fontWeight: 600 }}>{saved}/{students.length} students filled</div>
@@ -670,6 +687,7 @@ function MarkEntry({ school, slipTest, students, marks, onMarkChange, onBack, to
           );
         })}
       </div>
+      </div>
       {toast && <div className="toast">{toast}</div>}
     </div>
   );
@@ -696,7 +714,7 @@ function HMDashboard({ school, students, slipTests, allMarks }) {
     return (
       <div>
         <button className="back" onClick={() => setView(null)}>← Dashboard</button>
-        <div style={{ padding: "0 14px 14px" }}>
+        <div className="page" style={{paddingTop:0}}>
           <div className="sec">All Slip Tests ({totalTests})</div>
           {slipTests.length === 0 && <div className="empty"><div className="empty-icon">📋</div><div className="empty-txt">No slip tests yet</div></div>}
           {slipTests.map(st => {
@@ -740,7 +758,7 @@ function HMDashboard({ school, students, slipTests, allMarks }) {
     return (
       <div>
         <button className="back" onClick={() => setSubView(null)}>← Back to Tests</button>
-        <div style={{ padding: "0 14px 14px" }}>
+        <div className="page" style={{paddingTop:0}}>
           <div style={{ background: "var(--card)", borderRadius: "var(--r)", boxShadow: "var(--sh)", marginBottom: 12, padding: 14 }}>
             <div style={{ fontWeight: 800, fontSize: 16 }}>{st.name}</div>
             <div className="st-tags" style={{ marginTop: 8 }}>{st.subjects.map(s => <span key={s.subj} className="st-tag">{s.subj}: {s.maxMarks}</span>)}</div>
@@ -779,7 +797,7 @@ function HMDashboard({ school, students, slipTests, allMarks }) {
     return (
       <div>
         <button className="back" onClick={() => setView(null)}>← Dashboard</button>
-        <div style={{ padding: "0 14px 14px" }}>
+        <div className="page" style={{paddingTop:0}}>
           <div className="sec">Students ({totalStudents})</div>
           {students.length === 0 && <div className="empty"><div className="empty-icon">👥</div><div className="empty-txt">No students yet</div></div>}
           <div className="card">
@@ -808,7 +826,7 @@ function HMDashboard({ school, students, slipTests, allMarks }) {
     return (
       <div>
         <button className="back" onClick={() => setSubView(null)}>← Back to Students</button>
-        <div style={{ padding: "0 14px 14px" }}>
+        <div className="page" style={{paddingTop:0}}>
           <div style={{ background: "var(--card)", borderRadius: "var(--r)", boxShadow: "var(--sh)", padding: 14, marginBottom: 12 }}>
             <div style={{ fontWeight: 800, fontSize: 17 }}>{s.name}</div>
             <div style={{ fontSize: 12, color: "var(--sub)", marginTop: 2 }}>Roll: {s.rollNo} · {s.gender}</div>
@@ -844,21 +862,21 @@ function HMDashboard({ school, students, slipTests, allMarks }) {
   }
 
   return (
-    <div style={{ padding: 14, paddingBottom: 84 }}>
-      <div style={{ marginBottom: 14 }}>
+    <div className="page">
+      <div style={{ marginBottom: 20 }}>
         <div style={{ fontSize: 13, color: "var(--sub)", fontWeight: 700, marginBottom: 2 }}>Welcome,</div>
-        <div style={{ fontSize: 18, fontWeight: 800, color: "var(--text)" }}>{school.hmName}</div>
-        <div style={{ fontSize: 12, color: "var(--sub)" }}>{school.name}</div>
+        <div style={{ fontSize: 22, fontWeight: 800, color: "var(--text)" }}>{school.hmName}</div>
+        <div style={{ fontSize: 13, color: "var(--sub)" }}>{school.name}</div>
       </div>
       <div className="avg-tile">
         <div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--sub)" }}>Overall Average</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--sub)" }}>Overall Average</div>
           <div className="avg-num" style={{ color: overallAvg !== null ? "var(--p)" : "var(--sub)" }}>{overallAvg !== null ? overallAvg + "%" : "—"}</div>
-          <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>across all tests & students</div>
+          <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>across all tests & students</div>
         </div>
-        <span style={{ fontSize: 36 }}>📊</span>
+        <span style={{ fontSize: 44 }}>📊</span>
       </div>
-      {overallAvg !== null && <div style={{ margin: "-4px 0 14px" }}><div className="pbar-wrap"><div className="pbar-fill" style={{ width: overallAvg + "%" }} /></div></div>}
+      {overallAvg !== null && <div style={{ margin: "-4px 0 16px" }}><div className="pbar-wrap"><div className="pbar-fill" style={{ width: overallAvg + "%" }} /></div></div>}
       <div className="dash-grid">
         <div className="dash-tile" onClick={() => { setView("tests"); setSubView(null); }}>
           <div className="tile-icon">📋</div>
@@ -943,14 +961,16 @@ function HMApp({ session, onLogout }) {
   return (
     <div className="app">
       <div className="hdr">
-        <div className="hdr-l"><span style={{ fontSize: 20 }}>🏫</span><div><div className="hdr-title">{school.name}</div><div className="hdr-sub">{school.hmName}</div></div></div>
-        <button className="hbtn" onClick={onLogout}>Logout</button>
+        <div className="hdr-inner">
+          <div className="hdr-l"><span style={{ fontSize: 20 }}>🏫</span><div><div className="hdr-title">{school.name}</div><div className="hdr-sub">{school.hmName}</div></div></div>
+          <button className="hbtn" onClick={onLogout}>Logout</button>
+        </div>
       </div>
 
-      {tab === "dash" && <HMDashboard school={school} students={students} slipTests={slipTests} allMarks={allMarks} />}
+      {tab === "dash" && <div className="hm-wrap"><HMDashboard school={school} students={students} slipTests={slipTests} allMarks={allMarks} /></div>}
 
       {tab === "tests" && (
-        <div className="page">
+        <div className="hm-wrap"><div className="page">
           <div className="sec">Slip Tests</div>
           {slipTests.length === 0 && <div className="empty"><div className="empty-icon">📋</div><div className="empty-txt">No slip tests yet</div><div className="empty-hint">Tap + to create one</div></div>}
           {slipTests.map(st => {
@@ -979,11 +999,11 @@ function HMApp({ session, onLogout }) {
               </div>
             );
           })}
-        </div>
+        </div></div>
       )}
 
       {tab === "students" && (
-        <div className="page">
+        <div className="hm-wrap"><div className="page">
           <div className="sec">Students — 10th Class</div>
           {students.length === 0 && <div className="empty"><div className="empty-icon">👥</div><div className="empty-txt">No students yet</div><div className="empty-hint">Tap + to add</div></div>}
           {students.length > 0 && (
@@ -997,18 +1017,20 @@ function HMApp({ session, onLogout }) {
               ))}
             </div>
           )}
-        </div>
+        </div></div>
       )}
 
       {tab !== "dash" && <button className="fab" onClick={() => tab === "tests" ? setStModal("new") : setStuModal("new")}>＋</button>}
 
       <div className="bnav">
-        {[{ key: "dash", icon: "🏠", lbl: "Dashboard" }, { key: "tests", icon: "📋", lbl: "Tests" }, { key: "students", icon: "👥", lbl: "Students" }].map(n => (
-          <div className="bni" key={n.key} onClick={() => setTab(n.key)}>
-            <span className="bni-icon">{n.icon}</span>
-            <span className="bni-lbl" style={{ color: tab === n.key ? "var(--p)" : "var(--sub)" }}>{n.lbl}</span>
-          </div>
-        ))}
+        <div className="bnav-inner">
+          {[{ key: "dash", icon: "🏠", lbl: "Dashboard" }, { key: "tests", icon: "📋", lbl: "Tests" }, { key: "students", icon: "👥", lbl: "Students" }].map(n => (
+            <div className="bni" key={n.key} onClick={() => setTab(n.key)}>
+              <span className="bni-icon">{n.icon}</span>
+              <span className="bni-lbl" style={{ color: tab === n.key ? "var(--p)" : "var(--sub)" }}>{n.lbl}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {stuModal && <StudentModal initial={stuModal === "new" ? null : stuModal} onSave={stuModal === "new" ? addStudent : editStudent} onClose={() => setStuModal(null)} />}
